@@ -2,7 +2,7 @@ ObjectList = {}
 local DecoMode = false
 local MainCamera = nil
 local curPos
-local speeds = {0.01, 0.05, 0.1, 0.2, 0.4, 0.5}
+local speeds = {0.05, 0.1, 0.2, 0.4, 0.5}
 local curSpeed = 1
 local cursorEnabled = false
 local SelectedObj = nil
@@ -63,7 +63,7 @@ local function SaveDecorations()
 				if ObjectList then
 					ObjectList[#ObjectList+1] = {hashname = SelObjHash, x = SelObjPos.x, y = SelObjPos.y, z = SelObjPos.z, rotx = SelObjRot.x, roty = SelObjRot.y, rotz = SelObjRot.z, object = SelectedObj, objectId = #ObjectList+1}
 				else
-					ObjectList[1] = {hashname = SelObjHash, x = SelObjPos.x, y = SelObjPos.y, z = SelObjPos.z, rotx = SelObjRot.x, roty = SelObjRot.y, rotz = SelObjRot.z, object = SelectedObj, objectId = 1}
+					ObjectList[1] = {hashname = SelObjHash, x = SelObjPos.x, y = SelObjPos.y, z = SelObjPos.z, rotx = SelObjRot.x, roty = SelObjRot.y, rotz = SelObjRot.z, object = SelectedObj, objectId = #ObjectList+1}
 				end
 			end
 
@@ -101,28 +101,28 @@ local function CheckObjMovementInput()
     local yVect = speeds[curSpeed]
     local zVect = speeds[curSpeed]
 
-    if IsControlPressed( 1, 27) or IsDisabledControlPressed(1, 27) then -- Up Arrow
-		SelObjPos = GetOffsetFromEntityInWorldCoords(SelectedObj, 0, -yVect, 0)
+    if IsControlPressed( 1, 172) or IsDisabledControlPressed(1, 172) then -- Up Arrow
+    	SelObjPos.x = SelObjPos.x + xVect
     end
 
     if IsControlPressed( 1, 173) or IsDisabledControlPressed(1, 173) then -- Down Arrow
-		SelObjPos = GetOffsetFromEntityInWorldCoords(SelectedObj, 0, yVect, 0)
+    	SelObjPos.x = SelObjPos.x - xVect
     end
 
     if IsControlPressed( 1, 174) or IsDisabledControlPressed(1, 174) then -- Left Arrow
-		SelObjPos = GetOffsetFromEntityInWorldCoords(SelectedObj, xVect, 0, 0)
+    	SelObjPos.y = SelObjPos.y + yVect
     end
 
     if IsControlPressed( 1, 175) or IsDisabledControlPressed(1, 175) then -- Right Arrow
-		SelObjPos = GetOffsetFromEntityInWorldCoords(SelectedObj, -xVect, 0, 0)
+    	SelObjPos.y = SelObjPos.y - yVect
     end
 
     if IsControlPressed( 1, 10) or IsDisabledControlPressed(1, 10) then -- Page Up
-    	SelObjPos = GetOffsetFromEntityInWorldCoords(SelectedObj, 0, 0, zVect)
+    	SelObjPos.z = SelObjPos.z + zVect
     end
 
     if IsControlPressed( 1, 11) or IsDisabledControlPressed(1, 11) then -- Page Down
-    	SelObjPos = GetOffsetFromEntityInWorldCoords(SelectedObj, 0, 0, -zVect)
+    	SelObjPos.z = SelObjPos.z - zVect
     end
 
     SetEntityCoords(SelectedObj, SelObjPos.x, SelObjPos.y, SelObjPos.z)
@@ -133,7 +133,7 @@ local function CheckObjRotationInput()
     local yVect = speeds[curSpeed] * 5.5
     local zVect = speeds[curSpeed] * 5.5
 
-	if IsControlPressed( 1, 27) or IsDisabledControlPressed(1, 27) then -- Up Arrow
+	if IsControlPressed( 1, 172) or IsDisabledControlPressed(1, 172) then -- Up Arrow
     	SelObjRot.x = SelObjRot.x + xVect
     end
 
@@ -185,29 +185,36 @@ end
 
 local function CheckMovementInput()
 	local rotation = GetCamRot(MainCamera, 2)
+	local camRight, camForward, camUp, camPosition = GetCamMatrix(MainCamera)
 
 	if IsControlJustReleased(0, 21) then -- Left Shift
 		curSpeed = curSpeed + 1
 		if curSpeed > getTableLength(speeds) then
 			curSpeed = 1
 		end
-		QBCore.Functions.Notify(Lang:t("info.speed").. tostring(speeds[curSpeed]))
+		QBCore.Functions.Notify("Speed is ".. tostring(speeds[curSpeed]))
 	end
 
 	local xVect = speeds[curSpeed] * math.sin( degToRad( rotation.z ) ) * -1.0
     local yVect = speeds[curSpeed] * math.cos( degToRad( rotation.z ) )
     local zVect = speeds[curSpeed] * math.tan( degToRad( rotation.x ) - degToRad( rotation.y ))
 
+
+
     if IsControlPressed( 1, 32) or IsDisabledControlPressed(1, 32) then -- W
-    	curPos.x = curPos.x + xVect
-        curPos.y = curPos.y + yVect
-        curPos.z = curPos.z + zVect
+		curPos = vector3(curPos.x, curPos.y, curPos.z) + vector3(xVect, yVect, zVect)
     end
 
     if IsControlPressed( 1, 33) or IsDisabledControlPressed(1, 33) then -- S
-    	curPos.x = curPos.x - xVect
-        curPos.y = curPos.y - yVect
-        curPos.z = curPos.z - zVect
+		curPos = vector3(curPos.x, curPos.y, curPos.z) - vector3(xVect, yVect, zVect)
+	end
+
+	if IsControlPressed(1, 34) or IsDisabledControlPressed(1, 34) then -- A
+		curPos = vector3(curPos.x, curPos.y, curPos.z) - (camRight * 1) * speeds[curSpeed]
+	end
+
+	if IsControlPressed(1, 35) or IsDisabledControlPressed(1, 35) then -- A
+		curPos = vector3(curPos.x, curPos.y, curPos.z) + (camRight * 1) * speeds[curSpeed]
 	end
 
 	SetCamCoord(MainCamera, curPos.x, curPos.y, curPos.z)
@@ -218,16 +225,16 @@ end
 RegisterNetEvent('qb-houses:client:decorate', function()
 	Wait(500)
 	if IsInside then
-		if HasHouseKey then
+		if HasKey then
 			if not DecoMode then
 				EnableEditMode()
 				openDecorateUI()
 			end
 		else
-			QBCore.Functions.Notify(Lang:t("error.no_keys"), "error")
+			QBCore.Functions.Notify("You must have the keys to the house!", "error")
 		end
 	else
-		QBCore.Functions.Notify(Lang:t("error.not_in_house"), "error")
+		QBCore.Functions.Notify("You are not in a house!", "error")
 	end
 end)
 
@@ -417,6 +424,8 @@ CreateThread(function()
 			DisableAllControlActions(0)
 			EnableControlAction(0, 32, true) -- W
 			EnableControlAction(0, 33, true) -- S
+			EnableControlAction(0, 34, true) -- A
+			EnableControlAction(0, 35, true) -- D
 			EnableControlAction(0, 245, true) -- T
 			EnableControlAction(0, 21, true) -- Left Shift
 			EnableControlAction(0, 19, true) -- Left Alt
@@ -452,7 +461,7 @@ CreateThread(function()
 				if IsControlJustReleased(0, 19) then -- Left Alt
 					PlaceObjectOnGroundProperly(SelectedObj)
 					local groundPos = GetEntityCoords(SelectedObj)
-					SelObjPos = groundPos
+					SelObjPos.z = groundPos.z
                 end
 				if IsControlJustReleased(0, 191) then -- Enter
 					SetNuiFocus(true, true)
@@ -493,7 +502,7 @@ CreateThread(function()
 			if dist > 50.0 then
 				DisableEditMode()
 				closeDecorateUI()
-				QBCore.Functions.Notify(Lang:t("error.out_range"), 'error')
+				QBCore.Functions.Notify('You have gone out of range', 'error')
 			end
 		end
 	end

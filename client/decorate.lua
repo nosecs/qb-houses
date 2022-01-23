@@ -185,6 +185,7 @@ end
 
 local function CheckMovementInput()
 	local rotation = GetCamRot(MainCamera, 2)
+	local camRight, camForward, camUp, camPosition = GetCamMatrix(MainCamera)
 
 	if IsControlJustReleased(0, 21) then -- Left Shift
 		curSpeed = curSpeed + 1
@@ -198,6 +199,8 @@ local function CheckMovementInput()
     local yVect = speeds[curSpeed] * math.cos( degToRad( rotation.z ) )
     local zVect = speeds[curSpeed] * math.tan( degToRad( rotation.x ) - degToRad( rotation.y ))
 
+
+
     if IsControlPressed( 1, 32) or IsDisabledControlPressed(1, 32) then -- W
     	curPos.x = curPos.x + xVect
         curPos.y = curPos.y + yVect
@@ -208,6 +211,14 @@ local function CheckMovementInput()
     	curPos.x = curPos.x - xVect
         curPos.y = curPos.y - yVect
         curPos.z = curPos.z - zVect
+	end
+
+	if IsControlPressed(1, 34) or IsDisabledControlPressed(1, 34) then -- A
+		curPos = vector3(curPos.x, curPos.y, curPos.z) - (camRight * 1) * speeds[curSpeed]
+	end
+
+	if IsControlPressed(1, 35) or IsDisabledControlPressed(1, 35) then -- A
+		curPos = vector3(curPos.x, curPos.y, curPos.z) + (camRight * 1) * speeds[curSpeed]
 	end
 
 	SetCamCoord(MainCamera, curPos.x, curPos.y, curPos.z)
@@ -417,6 +428,8 @@ CreateThread(function()
 			DisableAllControlActions(0)
 			EnableControlAction(0, 32, true) -- W
 			EnableControlAction(0, 33, true) -- S
+			EnableControlAction(0, 34, true) -- A
+			EnableControlAction(0, 35, true) -- D
 			EnableControlAction(0, 245, true) -- T
 			EnableControlAction(0, 21, true) -- Left Shift
 			EnableControlAction(0, 19, true) -- Left Alt
